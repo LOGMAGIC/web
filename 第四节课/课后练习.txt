@@ -1,0 +1,1 @@
+完成https://buuoj.cn/challenges#Upload-Labs-Linux中的Pass01，Pass02，Pass03，Pass04，Pass08，Pass10
