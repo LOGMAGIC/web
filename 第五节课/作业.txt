@@ -1,0 +1,22 @@
+BugKu--Web文件包含（入门）；
+buuctf--[ACTF2020 新生赛]Include1；
+攻防世界--Web_php_include；
+攻防世界-fileclude-文件包含；
+buuctf--[HCTF 2018]WarmUp point 1
+
+--------------------------------------------------
+
+下周二课前分享有两种方式供大家选择：
+1.随机抽取课上的练习题进行演示（能说出其中原理或者多种解题方法 可以进行加分）题目如下：
+BugKu--Web文件包含（入门）；buuctf--[ACTF2020 新生赛]Include1；
+攻防世界--Web_php_include；攻防世界-fileclude-文件包含；buuctf--[HCTF 2018]WarmUp point 1
+2.除了课上讲过的文件包含利用方式，大家可以演示一种没有具体讲过的方式进行文件包含的例题 例题可以自行查找（比如日志包含、session包含、pearcmd……）
+
+---------------------------------------------------
+
+由于攻防世界的平台更新，下周二的课前分享题目进行了一定修改：
+1.BugKu--Web文件包含（入门）；
+2.buuctf--[ACTF2020 新生赛]Include1；
+3.青少年CTF靶场：ez-include  ； ez-include-plus
+4.buuctf--[HCTF 2018]WarmUp point 1
+其他内容保持不变
