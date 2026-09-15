@@ -1,0 +1,8 @@
+1，xss-labs 2 
+2，xss-labs 5 
+3，xss-labs 6
+4，xss-labs 7
+5，pikaqiu xss三个关卡并讲一讲区别和原理
+拓展，尝试了解csrf漏洞并思考如何利用csrf+xss打出效果
+
+pikaqiu靶场大家自己选三个关卡就好（要覆盖上课讲到的反射型，存储型和DOM型）
