@@ -192,7 +192,7 @@ file:// 不做 IP 解析。PHP 的 file 包装器只认 file:///path 或 file://
 challenge-7857988b03725a99.sandbox.ctfhub.com:10800/?url=file://127.0.0.1/flag.php
 ```
 
-返回<h1>url must startwith "http://notfound.ctfhub.com"</h1>
+返回url must startwith "http://notfound.ctfhub.com"
 
 ```url
 challenge-7857988b03725a99.sandbox.ctfhub.com:10800/?url=http://127.0.0.1/flag.php
